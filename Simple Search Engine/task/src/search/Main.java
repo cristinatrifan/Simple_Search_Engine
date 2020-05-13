@@ -7,6 +7,7 @@ public class Main {
         String word = " ";
         int noPeople = 0;
         int searchQ = 0;
+        int menuNo = 1;
         Main obj = new Main();
 
         //get all elements and all strings that should be searched in the elements
@@ -17,32 +18,56 @@ public class Main {
                noPeople = scanner.nextInt();
            }
 
-           System.out.println("Enter all people: ");
            scanner.nextLine();
+           System.out.println("Enter all people: ");
+
 
            while (scanner.hasNextLine() && noPeople > 0) {
-                people.add(scanner.nextLine());
-                noPeople--;
+               people.add(scanner.nextLine());
+               noPeople--;
            }
 
-            System.out.println("Enter the number of search queries: ");
-
-           if (scanner.hasNextLine()) {
-               searchQ = Integer.parseInt(scanner.nextLine());
-           }
-
-           while (searchQ > 0) {
-               System.out.println("");
-               System.out.println("Enter data to search people: ");
+           //scanner.nextLine();
+           while (menuNo > 0) {
+               System.out.println("\n=== Menu ===\n" +
+                       "1. Find a person\n" + "2. Print all people\n" + "0. Exit");
 
                if (scanner.hasNextLine()) {
-                   word = scanner.nextLine().trim();
+                   menuNo = Integer.parseInt(scanner.nextLine());
                }
-               obj.getMatch(people, word);
-               searchQ--;
-           }
 
+               //search for someone in the list
+               if (menuNo == 1) {
+                       System.out.println("");
+                       System.out.println("Enter a name or email to search all suitable people.");
+
+                       if (scanner.hasNextLine()) {
+                           word = scanner.nextLine().trim();
+                       }
+                       obj.getMatch(people, word);
+                       searchQ--;
+               }
+
+               //print the list of people
+               else if (menuNo == 2) {
+                   System.out.println("\n=== List of people ===");
+                   for (int i = 0; i < people.size(); i++){
+                       System.out.println(people.get(i));
+                   }
+               }
+
+               //exit
+               else if (menuNo == 0) {
+                   System.out.println("Bye!");
+               }
+
+               //error message
+               else {
+                   System.out.println("Incorrect option! Try again.");
+               }
+           }
        }
+
        catch (Exception e) {
            System.out.println("Problems with reading the input");
        }
