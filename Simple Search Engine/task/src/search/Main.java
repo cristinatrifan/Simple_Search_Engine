@@ -1,77 +1,78 @@
 package search;
 import java.util.*;
+import java.io.*;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         ArrayList<String> people = new ArrayList<>();
         String word = " ";
         int noPeople = 0;
-        int searchQ = 0;
         int menuNo = 1;
         Main obj = new Main();
 
-        //get all elements and all strings that should be searched in the elements
-       try (Scanner scanner = new Scanner(System.in)) {
-          System.out.println("Enter the number of people: ");
+        if (Arrays.asList(args).contains("--data")) {
+            File file = new File(Arrays.asList(args)
+                    .get(Arrays.asList(args)
+                            .indexOf("--data") + 1));
 
-           if (scanner.hasNextInt()) {
-               noPeople = scanner.nextInt();
-           }
+            //get all elements from the file
+            try (Scanner scanner = new Scanner(file)) {
+                while (scanner.hasNextLine()) {
+                    people.add(scanner.nextLine());
+                    noPeople--;
+                }
+            } catch (Exception e) {
+                System.out.println("Problems with reading the file");
+            }
 
-           scanner.nextLine();
-           System.out.println("Enter all people: ");
+            //get all strings that should be searched in the elements
+            try (Scanner scanner = new Scanner(System.in)) {
 
+                //scanner.nextLine();
+                while (menuNo > 0) {
+                    System.out.println("\n=== Menu ===\n" +
+                            "1. Find a person\n" + "2. Print all people\n" + "0. Exit");
 
-           while (scanner.hasNextLine() && noPeople > 0) {
-               people.add(scanner.nextLine());
-               noPeople--;
-           }
+                    if (scanner.hasNextLine()) {
+                        menuNo = Integer.parseInt(scanner.nextLine());
+                    }
 
-           //scanner.nextLine();
-           while (menuNo > 0) {
-               System.out.println("\n=== Menu ===\n" +
-                       "1. Find a person\n" + "2. Print all people\n" + "0. Exit");
+                    //search for someone in the list
+                    if (menuNo == 1) {
+                        System.out.println("");
+                        System.out.println("Enter a name or email to search all suitable people.");
 
-               if (scanner.hasNextLine()) {
-                   menuNo = Integer.parseInt(scanner.nextLine());
-               }
+                        if (scanner.hasNextLine()) {
+                            word = scanner.nextLine().trim();
+                        }
+                        obj.getMatch(people, word);
+                    }
 
-               //search for someone in the list
-               if (menuNo == 1) {
-                       System.out.println("");
-                       System.out.println("Enter a name or email to search all suitable people.");
+                    //print the list of people
+                    else if (menuNo == 2) {
+                        System.out.println("\n=== List of people ===");
+                        for (int i = 0; i < people.size(); i++) {
+                            System.out.println(people.get(i));
+                        }
+                    }
 
-                       if (scanner.hasNextLine()) {
-                           word = scanner.nextLine().trim();
-                       }
-                       obj.getMatch(people, word);
-                       searchQ--;
-               }
+                    //exit
+                    else if (menuNo == 0) {
+                        System.out.println("Bye!");
+                    }
 
-               //print the list of people
-               else if (menuNo == 2) {
-                   System.out.println("\n=== List of people ===");
-                   for (int i = 0; i < people.size(); i++){
-                       System.out.println(people.get(i));
-                   }
-               }
+                    //error message
+                    else {
+                        System.out.println("Incorrect option! Try again.");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Problems with reading the input");
+            }
 
-               //exit
-               else if (menuNo == 0) {
-                   System.out.println("Bye!");
-               }
-
-               //error message
-               else {
-                   System.out.println("Incorrect option! Try again.");
-               }
-           }
-       }
-
-       catch (Exception e) {
-           System.out.println("Problems with reading the input");
-       }
+        }
     }
+
 
     private void getMatch(ArrayList<String> people, String word) {
         ArrayList<String> matches = new ArrayList<>();
