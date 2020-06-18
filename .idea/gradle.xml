@@ -11,7 +11,10 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Problems/Companies" />
             <option value="$PROJECT_DIR$/Problems/Count elements of an array in another one" />
+            <option value="$PROJECT_DIR$/Problems/Filtering the list" />
+            <option value="$PROJECT_DIR$/Problems/Greek letters" />
             <option value="$PROJECT_DIR$/Problems/The first occurrence in the subarray" />
             <option value="$PROJECT_DIR$/Problems/The number of occurrences" />
             <option value="$PROJECT_DIR$/Simple Search Engine/task" />
