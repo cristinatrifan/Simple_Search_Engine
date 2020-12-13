@@ -5,9 +5,12 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) throws FileNotFoundException {
         List<String[]> people = new ArrayList<>();
-        String word = " ";
+        List<String[]> words = new ArrayList<>();
+        String strategy = " ";
         int menuNo = 1;
         Main obj = new Main();
+        Strategy strategyObj;
+        ContextStrategy context = new ContextStrategy();
 
         if (Arrays.asList(args).contains("--data")) {
             File file = new File(Arrays.asList(args)
@@ -45,16 +48,45 @@ public class Main {
                     //search for someone in the list
                     switch (menuNo) {
                         case 1 : {
+                            System.out.println("\nSelect a matching strategy: ALL, ANY, NONE");
+
+                            if (scanner.hasNextLine()) {
+                                strategy = scanner.nextLine().trim();
+                            }
+                            switch (strategy) {
+                                case "ANY" : {
+                                    strategyObj = new ANYStrategy();
+                                    break;
+                                }
+
+                                case "ALL" : {
+                                    strategyObj = new ALLStrategy();
+                                    break;
+                                }
+
+                                case "NONE" : {
+                                    strategyObj = new NONEStrategy();
+                                    break;
+                                }
+
+                                default : {
+                                    strategyObj = new ANYStrategy();
+                                    break;
+                                }
+                            }
+
                             System.out.println("");
                             System.out.println("Enter a name or email to search all suitable people.");
 
                             if (scanner.hasNextLine()) {
-                                word = scanner.nextLine().trim();
+                                words.add(scanner.nextLine().trim().split(""));
                             }
 
                             //use the inverted index search to find the
                             //information about the required person
-                            obj.getMatchByID(word, people);
+                            //obj.getMatchByID(word, people);
+                            context.setStrategy(strategyObj);
+                            context.invoke(words, people, obj.getInvIndex());
                             break;
                         }
 
@@ -88,6 +120,10 @@ public class Main {
             }
 
         }
+    }
+
+    public Map<String, List<Integer>> getInvIndex() {
+        return invIndex;
     }
 
     //inverted index
@@ -162,5 +198,156 @@ public class Main {
         }
         toPrint = toPrint.trim();
         return toPrint;
+    }
+};
+
+abstract class Strategy {
+    abstract void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex);
+
+    String toString(String[] people) {
+        String toPrint = "";
+        for (int i = 0; i < people.length; i++) {
+            toPrint += people[i] + " ";
+        }
+        toPrint = toPrint.trim();
+        return toPrint;
+    }
+}
+
+class ContextStrategy {
+    private Strategy strategy;
+
+    public void setStrategy(Strategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void invoke(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex){
+        this.strategy.execute(words, people, invIndex);
+    }
+}
+
+class ANYStrategy extends Strategy {
+
+    @Override
+    public void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex) {
+        int nrPersonsFound = 0;
+        List<String[]> peopleOut = new ArrayList<>();
+        for (String[] word : words) {
+            if (invIndex.containsKey(Arrays.toString(word))) {
+                for (int j = 0; j < invIndex.get(Arrays.toString(word)).size(); j++) {
+                    if (!peopleOut.contains(people
+                            .get(invIndex
+                                    .get(Arrays.toString(word))
+                                    .get(j)
+                            )))  {
+                        peopleOut.add(people
+                                .get(invIndex
+                                        .get(Arrays.toString(word))
+                                        .get(j)
+                                ));
+                        nrPersonsFound++;
+                    }
+                }
+            }
+        }
+
+        if(nrPersonsFound > 0) {
+            System.out.println(nrPersonsFound + " persons found:\n");
+            for (String[] person : peopleOut) {
+                System.out.println(super.toString(person));
+            }
+        }
+        else {
+            System.out.println("No matching people found.");
+        }
+    }
+}
+
+class ALLStrategy extends Strategy {
+
+    @Override
+    public void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex) {
+        int nrPersonsFound = 0;
+        Map<Integer, Integer> candidateIndexes = new HashMap<>();
+        for (String[] word : words) {
+            if (invIndex.containsKey(Arrays.toString(word))) {
+
+                for (Integer candidate : invIndex.get(Arrays.toString(word))) {
+                    if(candidateIndexes.containsKey(candidate)) {
+                        Integer appearences = candidateIndexes.get(candidate);
+                        appearences++;
+                        candidateIndexes.replace(candidate, appearences);
+                    }
+                    else
+                    {
+                        candidateIndexes.put(candidate, 1);
+                    }
+                }
+            }
+        }
+
+        if(candidateIndexes.containsValue(words.size())) {
+            for (Integer person : candidateIndexes.values()){
+                if(person == words.size()) {
+                    nrPersonsFound++;
+                }
+            }
+            System.out.println(nrPersonsFound + " persons found:\n");
+            for (Map.Entry<Integer, Integer> person : candidateIndexes.entrySet()){
+                if(person.getValue() == words.size()) {
+                    System.out.println(super.toString(people
+                                    .get(person.getKey()
+                            )));
+                }
+            }
+        }
+        else {
+            System.out.println("No matching people found.");
+        }
+    }
+}
+
+class NONEStrategy extends Strategy {
+
+    @Override
+    public void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex) {
+        int nrPersonsFound = 0;
+        int nrPeople = 0;
+        Map<Integer, Integer> candidateIndexes = new HashMap<>();
+        for (String[] person : people) {
+            nrPeople++;
+            candidateIndexes.put(nrPeople, 0);
+        }
+        for (String[] word : words) {
+            if (invIndex.containsKey(Arrays.toString(word))) {
+
+                for (Integer candidate : invIndex.get(Arrays.toString(word))) {
+                    if(candidateIndexes.containsKey(candidate)) {
+                        Integer appearences = candidateIndexes.get(candidate);
+                        appearences++;
+                        candidateIndexes.replace(candidate, appearences);
+                    }
+                }
+            }
+        }
+
+        if(candidateIndexes.containsValue(0)) {
+            for (Integer person : candidateIndexes.values()){
+                if(person == 0) {
+                    nrPersonsFound++;
+                }
+            }
+            System.out.println(nrPersonsFound + " persons found:\n");
+            for (Map.Entry<Integer, Integer> person : candidateIndexes.entrySet()) {
+                if(person.getValue() == 0) {
+                    System.out.println(super.toString(people
+                            .get(person.getKey()
+                            )));
+                }
+            }
+        }
+        else {
+            System.out.println("No matching people found.");
+        }
     }
 }
