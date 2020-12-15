@@ -5,7 +5,7 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) throws FileNotFoundException {
         List<String[]> people = new ArrayList<>();
-        List<String[]> words = new ArrayList<>();
+        String[] words ;
         String strategy = " ";
         int menuNo = 1;
         Main obj = new Main();
@@ -79,7 +79,11 @@ public class Main {
                             System.out.println("Enter a name or email to search all suitable people.");
 
                             if (scanner.hasNextLine()) {
-                                words.add(scanner.nextLine().trim().split(""));
+                                words = scanner.nextLine().toLowerCase().trim().split(" ");
+                            }
+                            else
+                            {
+                                words = new String[0];
                             }
 
                             //use the inverted index search to find the
@@ -129,30 +133,6 @@ public class Main {
     //inverted index
     private Map<String, List<Integer>> invIndex = new HashMap<>();
 
-    private void getMatch(ArrayList<String> people, String word) {
-        ArrayList<String> matches = new ArrayList<>();
-
-        //search for the strings in the elements
-        for (int i = 0; i < people.size(); i++) {
-            if (Arrays.stream(people.get(i)
-                    .toLowerCase().split(" "))
-                    .anyMatch(s -> s.contains(word.toLowerCase()))) {
-                matches.add(people.get(i));
-            }
-        }
-
-        //print the output
-        if (matches.size() > 0) {
-            System.out.println("");
-            System.out.println("Found people: ");
-            for (int i = 0; i < matches.size(); i++) {
-                System.out.println(matches.get(i));
-            }
-        } else {
-            System.out.println("No matching people found.");
-        }
-    }
-
     private void createInvertedIndex(List<String[]> people) {
 
         for (int i = 0; i < people.size(); i++) {
@@ -166,28 +146,9 @@ public class Main {
                     //create an index with the name/email in the String
                     //and add the first entry identifier that corresponds
                     invIndex.put(people.get(i)[j].toLowerCase(),
-                            new ArrayList<>(List.of(i)));
+                            new ArrayList<>(Arrays.asList(i)));
                 }
             }
-        }
-    }
-
-    private void getMatchByID(String word, List<String[]> people) {
-
-        if (invIndex.containsKey(word.toLowerCase())) {
-            System.out.println(invIndex.get(word.toLowerCase()).size() + " persons found:\n");
-
-            for (int i = 0; i < invIndex.get(word.toLowerCase()).size(); i++) {
-
-                System.out.println(this.toString(people
-                        .get(invIndex
-                        .get(word.toLowerCase())
-                        .get(i)
-                )));
-            }
-        }
-        else {
-            System.out.println("No matching people found.");
         }
     }
 
@@ -202,7 +163,7 @@ public class Main {
 };
 
 abstract class Strategy {
-    abstract void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex);
+    abstract void execute(String[] words, List<String[]> people, Map<String, List<Integer>> invIndex);
 
     String toString(String[] people) {
         String toPrint = "";
@@ -221,7 +182,7 @@ class ContextStrategy {
         this.strategy = strategy;
     }
 
-    public void invoke(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex){
+    public void invoke(String[] words, List<String[]> people, Map<String, List<Integer>> invIndex){
         this.strategy.execute(words, people, invIndex);
     }
 }
@@ -229,20 +190,20 @@ class ContextStrategy {
 class ANYStrategy extends Strategy {
 
     @Override
-    public void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex) {
+    public void execute(String[] words, List<String[]> people, Map<String, List<Integer>> invIndex) {
         int nrPersonsFound = 0;
         List<String[]> peopleOut = new ArrayList<>();
-        for (String[] word : words) {
-            if (invIndex.containsKey(Arrays.toString(word))) {
-                for (int j = 0; j < invIndex.get(Arrays.toString(word)).size(); j++) {
+        for (int i = 0; i < words.length; i++) {
+            if (invIndex.containsKey(words[i])) {
+                for (int j = 0; j < invIndex.get(words[i]).size(); j++) {
                     if (!peopleOut.contains(people
                             .get(invIndex
-                                    .get(Arrays.toString(word))
+                                    .get(words[i])
                                     .get(j)
                             )))  {
                         peopleOut.add(people
                                 .get(invIndex
-                                        .get(Arrays.toString(word))
+                                        .get(words[i])
                                         .get(j)
                                 ));
                         nrPersonsFound++;
@@ -266,13 +227,13 @@ class ANYStrategy extends Strategy {
 class ALLStrategy extends Strategy {
 
     @Override
-    public void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex) {
+    public void execute(String[] words, List<String[]> people, Map<String, List<Integer>> invIndex) {
         int nrPersonsFound = 0;
         Map<Integer, Integer> candidateIndexes = new HashMap<>();
-        for (String[] word : words) {
-            if (invIndex.containsKey(Arrays.toString(word))) {
+        for (int i = 0; i < words.length; i++) {
+            if (invIndex.containsKey(words[i])) {
 
-                for (Integer candidate : invIndex.get(Arrays.toString(word))) {
+                for (Integer candidate : invIndex.get(words[i])) {
                     if(candidateIndexes.containsKey(candidate)) {
                         Integer appearences = candidateIndexes.get(candidate);
                         appearences++;
@@ -286,15 +247,15 @@ class ALLStrategy extends Strategy {
             }
         }
 
-        if(candidateIndexes.containsValue(words.size())) {
+        if(candidateIndexes.containsValue(words.length)) {
             for (Integer person : candidateIndexes.values()){
-                if(person == words.size()) {
+                if(person == words.length) {
                     nrPersonsFound++;
                 }
             }
             System.out.println(nrPersonsFound + " persons found:\n");
             for (Map.Entry<Integer, Integer> person : candidateIndexes.entrySet()){
-                if(person.getValue() == words.size()) {
+                if(person.getValue() == words.length) {
                     System.out.println(super.toString(people
                                     .get(person.getKey()
                             )));
@@ -310,18 +271,18 @@ class ALLStrategy extends Strategy {
 class NONEStrategy extends Strategy {
 
     @Override
-    public void execute(List<String[]> words, List<String[]> people, Map<String, List<Integer>> invIndex) {
+    public void execute(String[] words, List<String[]> people, Map<String, List<Integer>> invIndex) {
         int nrPersonsFound = 0;
         int nrPeople = 0;
         Map<Integer, Integer> candidateIndexes = new HashMap<>();
         for (String[] person : people) {
-            nrPeople++;
             candidateIndexes.put(nrPeople, 0);
+            nrPeople++;
         }
-        for (String[] word : words) {
-            if (invIndex.containsKey(Arrays.toString(word))) {
+        for (int i = 0; i < words.length; i++) {
+            if (invIndex.containsKey(words[i])) {
 
-                for (Integer candidate : invIndex.get(Arrays.toString(word))) {
+                for (Integer candidate : invIndex.get(words[i])) {
                     if(candidateIndexes.containsKey(candidate)) {
                         Integer appearences = candidateIndexes.get(candidate);
                         appearences++;

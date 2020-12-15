@@ -318,6 +318,24 @@ files:
 - name: src/search/Main.java
   visible: true
   learner_created: true
+- name: src/search/Main.class
+  visible: true
+  learner_created: true
+- name: src/search/ALLStrategy.class
+  visible: true
+  learner_created: true
+- name: src/search/ContextStrategy.class
+  visible: true
+  learner_created: true
+- name: src/search/Strategy.class
+  visible: true
+  learner_created: true
+- name: src/search/ANYStrategy.class
+  visible: true
+  learner_created: true
+- name: src/search/NONEStrategy.class
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/66/stages/359/implement
-status: Failed
+status: Solved
 record: -1
